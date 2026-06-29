@@ -96,9 +96,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (nameController.text.trim().isEmpty) return;
 
 final place = SavedPlace(
+  id: DateTime.now().millisecondsSinceEpoch.toString(),
   name: nameController.text.trim(),
   latitude: position.latitude,
   longitude: position.longitude,
+  createdAt: DateTime.now(),
 );
 
                     await HiveService.addPlace(place);
@@ -161,10 +163,8 @@ final place = SavedPlace(
               onPressed: () async {
                 if (nameController.text.trim().isEmpty) return;
 
-                final updatedPlace = SavedPlace(
+                final updatedPlace = oldPlace.copyWith(
   name: nameController.text.trim(),
-  latitude: oldPlace.latitude,
-  longitude: oldPlace.longitude,
 );
 
                 await HiveService.updatePlace(index, updatedPlace);
@@ -184,12 +184,66 @@ final place = SavedPlace(
   }
 
   Future<void> deletePlace(int index) async {
-    await HiveService.deletePlace(index);
+  final place = savedPlaces[index];
 
-    setState(() {
-      savedPlaces.removeAt(index);
+  final bool? shouldDelete = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: const Color(0xFF181818),
+        title: const Text(
+          "Delete Place?",
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          "Are you sure you want to delete '${place.name}'?",
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              "Delete",
+              style: TextStyle(color: Color(0xFFFF4D4F)),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (shouldDelete != true) return;
+
+  await HiveService.deletePlace(index);
+
+  setState(() {
+    savedPlaces.removeAt(index);
+  });
+}
+
+Future<void> toggleFavorite(int index) async {
+  final place = savedPlaces[index];
+
+  final updatedPlace = place.copyWith(
+    isFavorite: !place.isFavorite,
+  );
+
+  await HiveService.updatePlace(index, updatedPlace);
+
+  setState(() {
+    savedPlaces[index] = updatedPlace;
+
+    savedPlaces.sort((a, b) {
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+      return b.createdAt.compareTo(a.createdAt);
     });
-  }
+  });
+}
 
   String getGreeting() {
     final hour = DateTime.now().hour;
@@ -301,6 +355,9 @@ final place = SavedPlace(
                             onDelete: () {
                               deletePlace(originalIndex);
                             },
+                            onFavorite: () {
+  toggleFavorite(originalIndex);
+},
                           );
                         },
                       ),
@@ -366,6 +423,7 @@ class _PlaceCard extends StatelessWidget {
   final VoidCallback onShare;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onFavorite;
 
   const _PlaceCard({
     required this.place,
@@ -373,6 +431,7 @@ class _PlaceCard extends StatelessWidget {
     required this.onShare,
     required this.onEdit,
     required this.onDelete,
+    required this.onFavorite,
   });
 
   @override
@@ -399,7 +458,8 @@ class _PlaceCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 14),
-              Expanded(
+
+            Expanded(
                 child: Text(
                   place.name,
                   style: const TextStyle(
@@ -409,8 +469,16 @@ class _PlaceCard extends StatelessWidget {
                   ),
                 ),
               ),
+              IconButton(
+                onPressed: onFavorite,
+                icon: Icon(
+                  place.isFavorite ? Icons.star : Icons.star_border,
+                  color: place.isFavorite ? Colors.amber : Colors.white54,
+                ),
+              ),
             ],
           ),
+
           const SizedBox(height: 14),
           Text(
             "📍 ${place.latitude.toStringAsFixed(5)}, ${place.longitude.toStringAsFixed(5)}",
