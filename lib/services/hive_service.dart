@@ -9,8 +9,6 @@ class HiveService {
       'name': place.name,
       'latitude': place.latitude,
       'longitude': place.longitude,
-      'isFavorite': place.isFavorite,
-      'address': place.address,
     });
   }
 
@@ -22,8 +20,6 @@ class HiveService {
         name: data['name'],
         latitude: data['latitude'],
         longitude: data['longitude'],
-        isFavorite: data['isFavorite'] ?? false,
-        address: data['address'] ?? "",
       );
     }).toList();
   }
@@ -37,8 +33,6 @@ class HiveService {
       'name': place.name,
       'latitude': place.latitude,
       'longitude': place.longitude,
-      'isFavorite': place.isFavorite,
-      'address': place.address,
     });
   }
 }

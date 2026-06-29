@@ -95,11 +95,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () async {
                     if (nameController.text.trim().isEmpty) return;
 
-                    final place = SavedPlace(
-                      name: nameController.text.trim(),
-                      latitude: position.latitude,
-                      longitude: position.longitude,
-                    );
+final place = SavedPlace(
+  name: nameController.text.trim(),
+  latitude: position.latitude,
+  longitude: position.longitude,
+);
 
                     await HiveService.addPlace(place);
 
@@ -162,10 +162,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (nameController.text.trim().isEmpty) return;
 
                 final updatedPlace = SavedPlace(
-                  name: nameController.text.trim(),
-                  latitude: oldPlace.latitude,
-                  longitude: oldPlace.longitude,
-                );
+  name: nameController.text.trim(),
+  latitude: oldPlace.latitude,
+  longitude: oldPlace.longitude,
+);
 
                 await HiveService.updatePlace(index, updatedPlace);
 
